@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Varenyam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- GATE -->
+<section id="gate-screen">
+  <div class="gate-card">
+    <div class="logo-mark">V</div>
+    <h1>Varenyam</h1>
+    <p>Track your progress, compete with friends and stay accountable.</p>
+    <label>Name</label>
+    <input id="nameInput" type="text" maxlength="24" placeholder="Your Name" value="TestUser">
+    <label>Room Code</label>
+    <input id="roomInput" type="text" maxlength="30" placeholder="study-room" value="testroom">
+    <label>Room Password</label>
+    <input id="passwordInput" type="password" maxlength="32" placeholder="Leave blank for public room">
+    <p class="hint">Create a new room by entering a unique code and password.</p>
+    <button id="enterBtn">Enter Workspace</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+</section>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="brand">
+      <div class="brand-icon">V</div>
+      <div>
+        <h2>Varenyam</h2>
+        <span id="topbarRoom">Workspace</span>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-center">
+    <input class="search" id="searchInput" placeholder="Search members, posts...">
+  </div>
+  <div class="topbar-right">
+    <button class="ghost small" id="inviteBtn">Invite</button>
+  </div>
+</header>
+
+<main class="app-layout">
+
+<!-- LEFT SIDEBAR -->
+<aside class="sidebar">
+  <div class="profile-card">
+    <div class="avatar" id="youAvatar"></div>
+    <h2 id="youName"></h2>
+    <p class="room-label">
+      <span>ROOM</span>
+      <strong id="youRoom"></strong>
+    </p>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-title">Weekly Progress</div>
+    <div class="sidebar-stat">
+      <span>XP</span>
+      <strong class="mono" id="sideXP">0</strong>
+    </div>
+    <div class="sidebar-stat">
+      <span>Rank</span>
+      <strong class="mono" id="sideRank">--</strong>
+    </div>
+    <div class="sidebar-stat">
+      <span>Streak</span>
+      <strong class="mono" id="sideStreak">0 Days</strong>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-title">Members</div>
+    <div class="member-list" id="memberList"></div>
+  </div>
+</aside>
+
+<!-- CENTER CONTENT -->
+<section class="content-area">
+
+  <!-- HOME PAGE -->
+  <section class="page" id="page-you">
+    <div class="hero-card">
+      <div>
+        <p class="hero-overline">PRODUCTIVITY DASHBOARD</p>
+        <h1>Welcome back, <span id="heroName"></span></h1>
+        <p class="hero-description">Stay consistent. Every productive day pushes you further up the leaderboard.</p>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card wide">
+        <div class="card-heading">Weekly Overview</div>
+        <div id="youStatStrip"></div>
+      </div>
+      <div class="overview-card">
+        <div class="card-heading">Current Streak</div>
+        <div class="hero-number mono" id="heroStreak">0</div>
+        <p>consecutive productive days</p>
+      </div>
+      <div class="overview-card">
+        <div class="card-heading">Weekly Rank</div>
+        <div class="hero-number mono" id="heroRank">--</div>
+        <p>top performer this week</p>
+      </div>
+    </div>
+
+    <div class="activity-card">
+      <div class="card-heading">Recent Activity</div>
+      <div id="youTimeline"></div>
+    </div>
+  </section>
+
+  <!-- ROOM PAGE (Discord-style chat) -->
+  <section class="page" id="page-room" style="display:none;">
+    <div class="chat-layout">
+
+      <aside class="chat-sidebar">
+        <div class="chat-sidebar-header">
+          <h3 id="chatRoomName">Workspace</h3>
+          <p id="chatRoomCode"></p>
+        </div>
+        <div class="channel-header">CHANNELS</div>
+        <div class="channel-list">
+          <div class="channel-item active" data-channel="general">general</div>
+          <div class="channel-item" data-channel="daily-log">daily-log</div>
+          <div class="channel-item" data-channel="study">study</div>
+          <div class="channel-item" data-channel="coding">coding</div>
+          <div class="channel-item" data-channel="fitness">fitness</div>
+          <div class="channel-item" data-channel="wins">wins</div>
+        </div>
+      </aside>
+
+      <section class="chat-main">
+        <div class="chat-header">
+          <span class="chat-hash">#</span>
+          <span id="currentChannel">general</span>
+          <span class="chat-topic">Share what you accomplished today</span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="chat-composer">
+          <div class="tag-row" id="tagPicker">
+            <button class="tag-pill chosen" data-tag="study">Study</button>
+            <button class="tag-pill" data-tag="work">Work</button>
+            <button class="tag-pill" data-tag="coding">Coding</button>
+            <button class="tag-pill" data-tag="fitness">Fitness</button>
+            <button class="tag-pill" data-tag="other">Other</button>
+          </div>
+          <div class="composer-input-wrap">
+            <textarea id="entryText" placeholder="Share what you achieved today..."></textarea>
+            <button id="postBtn" class="send-btn">Send</button>
+          </div>
+          <div class="err" id="postErr"></div>
+        </div>
+      </section>
+
+    </div>
+  </section>
+
+  <!-- LEADERBOARD PAGE -->
+  <section class="page" id="page-board" style="display:none;">
+    <div class="leaderboard-shell">
+
+      <div class="leaderboard-header">
+        <div>
+          <h1>Weekly Leaderboard</h1>
+          <p id="currentWeekRange"></p>
+        </div>
+        <div class="countdown" id="countdown"></div>
+      </div>
+
+      <div class="podium" id="podium"></div>
+
+      <div class="rank-list" id="currentRankList"></div>
+
+      <div class="history-section">
+        <div class="card-heading">Previous Winners</div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+
+    </div>
+  </section>
+
+</section>
+
+<!-- RIGHT SIDEBAR -->
+<aside class="right-sidebar">
+  <div class="side-card">
+    <div class="card-heading">Room Statistics</div>
+    <div class="mini-stat">
+      <span>Members</span>
+      <strong class="mono" id="statMembers">0</strong>
+    </div>
+    <div class="mini-stat">
+      <span>Posts Today</span>
+      <strong class="mono" id="statPosts">0</strong>
+    </div>
+    <div class="mini-stat">
+      <span>Total Ratings</span>
+      <strong class="mono" id="statRatings">0</strong>
+    </div>
+  </div>
+
+  <div class="side-card">
+    <div class="card-heading">Weekly Champion</div>
+    <div id="championCard"></div>
+  </div>
+</aside>
+
+</main>
+
+<nav id="bottomNav">
+  <div class="nav-item active" data-page="you">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    <small>Home</small>
+  </div>
+  <div class="nav-item" data-page="room">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    <small>Room</small>
+  </div>
+  <div class="nav-item" data-page="board">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+    <small>Leaderboard</small>
+  </div>
+</nav>
+
+</div>
+
+<script   >
+// VARENYAM - COMPLETE FIXED VERSION
+console.log('Varenyam loading...');
+
+const $ = id => document.getElementById(id);
+
+const Storage = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} },
+  remove(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+let myName = Storage.get('v_name') || '';
+let myRoom = Storage.get('v_room') || '';
+let allEntries = [];
+let selectedTag = 'study';
+let currentChannel = 'general';
+let leaderboardData = null;
+let historyData = null;
+let myStats = null;
+let roomData = null;
+
+const COLORS = ['#e50914','#8c0810','#b81d24','#3a3a3a','#565656','#6e7681','#d29922','#58a6ff'];
+
+function slug(s){ return s.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,''); }
+function esc(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function inits(n){ return n.trim().split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join(''); }
+function col(n){ let h=0; for(let i=0;i<n.length;i++) h=n.charCodeAt(i)+((h<<5)-h); return COLORS[Math.abs(h)%COLORS.length]; }
+function fmtDate(ts){ const d=new Date(ts),now=new Date(); const t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(d.toDateString()===now.toDateString()) return 'Today at '+t; return d.toLocaleDateString([],{month:'short',day:'numeric'})+' at '+t; }
+function fmtRange(s,e){ const a=new Date(s),b=new Date(e-1); return a.toLocaleDateString([],{month:'short',day:'numeric'})+' - '+b.toLocaleDateString([],{month:'short',day:'numeric'}); }
+function ago(ts){ const d=Date.now()-ts,m=Math.floor(d/60000); if(m<1)return'just now'; if(m<60)return m+'m ago'; const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago'; }
+
+// ============================================
+// DATABASE
+// ============================================
+const DB = {
+  getRooms(){ 
+    try{ return JSON.parse(localStorage.getItem('v_rooms')||'{}'); } 
+    catch(e){ return {}; } 
+  },
+  saveRooms(data){ 
+    try{ localStorage.setItem('v_rooms', JSON.stringify(data)); } 
+    catch(e){ console.error('Save failed:', e); } 
+  },
+  
+  getRoom(code){
+    const rooms = this.getRooms();
+    if(!rooms[code]){
+      const now = Date.now();
+      const weekStart = now - (now % (7 * 24 * 60 * 60 * 1000));
+      rooms[code] = {
+        password: '',
+        createdAt: now,
+        members: [],
+        entries: [],
+        weekStart: weekStart,
+        weekEnd: weekStart + (7 * 24 * 60 * 60 * 1000),
+        history: []
+      };
+      this.saveRooms(rooms);
+    }
+    return rooms[code];
+  },
+  
+  addMember(code, name){
+    const rooms = this.getRooms();
+    if(!rooms[code]) {
+      const now = Date.now();
+      const weekStart = now - (now % (7 * 24 * 60 * 60 * 1000));
+      rooms[code] = {
+        password: '',
+        createdAt: now,
+        members: [name],
+        entries: [],
+        weekStart: weekStart,
+        weekEnd: weekStart + (7 * 24 * 60 * 60 * 1000),
+        history: []
+      };
+    } else if(!rooms[code].members.includes(name)) {
+      rooms[code].members.push(name);
+    }
+    this.saveRooms(rooms);
+    return rooms[code];
+  },
+  
+  addEntry(code, entry){
+    const rooms = this.getRooms();
+    if(!rooms[code]) {
+      const now = Date.now();
+      const weekStart = now - (now % (7 * 24 * 60 * 60 * 1000));
+      rooms[code] = {
+        password: '',
+        createdAt: now,
+        members: [entry.name],
+        entries: [entry],
+        weekStart: weekStart,
+        weekEnd: weekStart + (7 * 24 * 60 * 60 * 1000),
+        history: []
+      };
+    } else {
+      rooms[code].entries.unshift(entry);
+      if(!rooms[code].members.includes(entry.name)) {
+        rooms[code].members.push(entry.name);
+      }
+    }
+    this.saveRooms(rooms);
+    return entry;
+  },
+  
+  rateEntry(code, entryId, rater, score){
+    const rooms = this.getRooms();
+    if(!rooms[code]) return false;
+    const entry = rooms[code].entries.find(e => e.id === entryId);
+    if(!entry) return false;
+    if(!entry.ratings) entry.ratings = {};
+    entry.ratings[rater] = score;
+    this.saveRooms(rooms);
+    return true;
+  },
+  
+  getLeaderboard(code){
+    const room = this.getRoom(code);
+    const now = Date.now();
+    
+    // Check if week has ended
+    if(now > room.weekEnd && room.entries.length > 0){
+      const scores = {};
+      room.entries.forEach(e => {
+        if(e.createdAt >= room.weekStart && e.createdAt < room.weekEnd){
+          const ratings = Object.values(e.ratings || {});
+          if(ratings.length){
+            scores[e.name] = (scores[e.name] || 0) + ratings.reduce((a,b) => a + b, 0);
+          }
+        }
+      });
+      const winner = Object.entries(scores).sort((a,b) => b[1] - a[1])[0];
+      if(winner){
+        room.history.push({
+          weekStart: room.weekStart,
+          weekEnd: room.weekEnd,
+          winner: { name: winner[0], points: winner[1] }
+        });
+      }
+      room.weekStart = room.weekEnd;
+      room.weekEnd += 7 * 24 * 60 * 60 * 1000;
+      this.saveRooms(this.getRooms());
+    }
+    
+    // Calculate current week scores
+    const scores = {};
+    const ratingCounts = {};
+    room.entries.forEach(e => {
+      if(e.createdAt >= room.weekStart && e.createdAt < room.weekEnd){
+        const ratings = Object.values(e.ratings || {});
+        if(ratings.length){
+          scores[e.name] = (scores[e.name] || 0) + ratings.reduce((a,b) => a + b, 0);
+          ratingCounts[e.name] = (ratingCounts[e.name] || 0) + ratings.length;
+        }
+      }
+    });
+    
+    // Calculate streaks
+    const streaks = {};
+    room.members.forEach(m => {
+      const userEntries = room.entries.filter(e => e.name === m).sort((a,b) => b.createdAt - a.createdAt);
+      let streak = 0;
+      let date = new Date();
+      date.setHours(0, 0, 0, 0);
+      for(let i = 0; i < 30; i++){
+        const dayStart = date.getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+        if(userEntries.some(e => e.createdAt >= dayStart && e.createdAt < dayEnd)){
+          streak++;
+          date.setDate(date.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      streaks[m] = streak;
+    });
+    
+    const leaderboard = Object.entries(scores).map(([name, points]) => ({
+      name,
+      points,
+      ratings: ratingCounts[name] || 0,
+      streak: streaks[name] || 0
+    })).sort((a,b) => b.points - a.points);
+    
+    return {
+      weekStart: room.weekStart,
+      weekEnd: room.weekEnd,
+      leaderboard: leaderboard
+    };
+  },
+  
+  getUserStats(code, name){
+    const room = this.getRoom(code);
+    const userEntries = room.entries.filter(e => e.name === name);
+    const allRatings = userEntries.flatMap(e => Object.values(e.ratings || {}));
+    const ratingsGiven = room.entries.filter(e => e.ratings && e.ratings[name]).length;
+    
+    // Calculate streak
+    let streak = 0;
+    let date = new Date();
+    date.setHours(0, 0, 0, 0);
+    for(let i = 0; i < 30; i++){
+      const dayStart = date.getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      if(userEntries.some(e => e.createdAt >= dayStart && e.createdAt < dayEnd)){
+        streak++;
+        date.setDate(date.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    
+    return {
+      entries: userEntries,
+      entriesCount: userEntries.length,
+      totalPoints: allRatings.reduce((a,b) => a + b, 0),
+      avgRating: allRatings.length ? (allRatings.reduce((a,b) => a + b, 0) / allRatings.length).toFixed(1) : null,
+      streak: streak,
+      ratingsGivenCount: ratingsGiven
+    };
+  }
+};
+
+// ============================================
+// DIRECT API FUNCTIONS
+// ============================================
+function apiPostEntry(room, data){
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    name: data.name,
+    content: data.content,
+    tag: data.tag || 'other',
+    channel: data.channel || 'general',
+    createdAt: Date.now(),
+    ratings: {}
+  };
+  DB.addEntry(room, entry);
+  return Promise.resolve({ ok: true, json: () => Promise.resolve(entry) });
+}
+
+function apiGetEntries(room){
+  const roomData = DB.getRoom(room);
+  return Promise.resolve({ ok: true, json: () => Promise.resolve(roomData.entries || []) });
+}
+
+function apiGetLeaderboard(room){
+  return Promise.resolve({ ok: true, json: () => Promise.resolve(DB.getLeaderboard(room)) });
+}
+
+function apiGetHistory(room){
+  const roomData = DB.getRoom(room);
+  return Promise.resolve({ ok: true, json: () => Promise.resolve({ weeks: roomData.history || [] }) });
+}
+
+function apiRate(room, entryId, rater, score){
+  DB.rateEntry(room, entryId, rater, score);
+  return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+}
+
+// ============================================
+// TOAST
+// ============================================
+function toast(msg, type){
+  type = type || 'info';
+  const el = document.createElement('div');
+  el.className = 'toast-msg ' + (type === 'error' ? 'error' : type === 'success' ? 'success' : '');
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ============================================
+// LOGIN
+// ============================================
+document.getElementById('enterBtn').onclick = function() {
+  const name = document.getElementById('nameInput').value.trim();
+  const room = slug(document.getElementById('roomInput').value);
+  const password = document.getElementById('passwordInput').value;
+  
+  if(!name || !room){
+    document.getElementById('gateErr').textContent = 'Enter your name and a room code.';
+    return;
+  }
+  
+  document.getElementById('enterBtn').disabled = true;
+  document.getElementById('enterBtn').textContent = 'Connecting...';
+  
+  const rooms = DB.getRooms();
+  if(rooms[room] && rooms[room].password && rooms[room].password !== password){
+    document.getElementById('gateErr').textContent = 'Wrong password.';
+    document.getElementById('enterBtn').disabled = false;
+    document.getElementById('enterBtn').textContent = 'Enter Workspace';
+    return;
+  }
+  
+  DB.addMember(room, name);
+  myName = name;
+  myRoom = room;
+  Storage.set('v_name', myName);
+  Storage.set('v_room', myRoom);
+  Storage.set('v_pass', password);
+  
+  enterApp();
+};
+
+if(myName && myRoom){
+  const rooms = DB.getRooms();
+  if(rooms[myRoom]){
+    enterApp();
+  } else {
+    Storage.remove('v_name');
+    Storage.remove('v_room');
+    Storage.remove('v_pass');
+  }
+}
+
+// ============================================
+// ENTER APP
+// ============================================
+function enterApp(){
+  document.getElementById('gate-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  document.getElementById('youName').textContent = myName;
+  document.getElementById('heroName').textContent = myName;
+  document.getElementById('youRoom').textContent = myRoom;
+  document.getElementById('topbarRoom').textContent = myRoom;
+  document.getElementById('chatRoomName').textContent = myRoom;
+  document.getElementById('chatRoomCode').textContent = myRoom;
+  
+  const av = document.getElementById('youAvatar');
+  av.style.background = col(myName);
+  av.textContent = inits(myName);
+  
+  refreshAll().then(() => {
+    showPage('you');
+  });
+  
+  // Auto-refresh every 3 seconds
+  setInterval(() => {
+    refreshAll().then(() => {
+      const active = document.querySelector('.nav-item.active');
+      if(active){
+        const page = active.dataset.page;
+        if(page === 'you') renderProfile();
+        else if(page === 'room') renderChat();
+        else if(page === 'board') renderBoard();
+      }
+    });
+  }, 3000);
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.onclick = function(){
+    showPage(this.dataset.page);
+  };
+});
+
+function showPage(name){
+  document.querySelectorAll('.nav-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.page === name);
+  });
+  
+  document.getElementById('page-you').style.display = name === 'you' ? 'block' : 'none';
+  document.getElementById('page-room').style.display = name === 'room' ? 'block' : 'none';
+  document.getElementById('page-board').style.display = name === 'board' ? 'block' : 'none';
+  
+  if(name === 'you') renderProfile();
+  else if(name === 'room') renderChat();
+  else if(name === 'board') renderBoard();
+}
+
+// ============================================
+// REFRESH
+// ============================================
+function refreshAll(){
+  console.log('Refreshing data...');
+  return Promise.all([
+    apiGetEntries(myRoom),
+    apiGetLeaderboard(myRoom),
+    apiGetHistory(myRoom)
+  ])
+    .then(results => Promise.all(results.map(r => r.json())))
+    .then(data => {
+      allEntries = data[0] || [];
+      leaderboardData = data[1] || { leaderboard: [] };
+      historyData = data[2] || { weeks: [] };
+      myStats = DB.getUserStats(myRoom, myName);
+      roomData = DB.getRoom(myRoom);
+      console.log('Entries loaded:', allEntries.length);
+      renderRightSidebar();
+    })
+    .catch(e => console.error('Refresh failed:', e));
+}
+
+// ============================================
+// PROFILE
+// ============================================
+function renderProfile(){
+  if(!myStats) return;
+  
+  document.getElementById('youStatStrip').innerHTML = `
+    <div class="stat-cell"><div class="num">${myStats.entriesCount}</div><div class="lbl">Posts</div></div>
+    <div class="stat-cell accent"><div class="num">${myStats.streak}</div><div class="lbl">Streak</div></div>
+    <div class="stat-cell"><div class="num">${myStats.totalPoints}</div><div class="lbl">Points</div></div>
+    <div class="stat-cell"><div class="num">${myStats.avgRating || '--'}</div><div class="lbl">Avg Rating</div></div>
+    <div class="stat-cell"><div class="num">${myStats.ratingsGivenCount}</div><div class="lbl">Given</div></div>
+  `;
+  
+  document.getElementById('heroStreak').textContent = myStats.streak;
+  
+  const lb = leaderboardData && leaderboardData.leaderboard ? leaderboardData.leaderboard : [];
+  const rank = lb.findIndex(r => r.name === myName);
+  document.getElementById('heroRank').textContent = rank !== -1 ? '#' + (rank + 1) : '--';
+  document.getElementById('sideXP').textContent = myStats.totalPoints;
+  document.getElementById('sideRank').textContent = rank !== -1 ? '#' + (rank + 1) : '--';
+  document.getElementById('sideStreak').textContent = myStats.streak + ' Days';
+  
+  if(!myStats.entries || myStats.entries.length === 0){
+    document.getElementById('youTimeline').innerHTML = '<div class="empty">No posts yet. Head to Room to share your first update.</div>';
+    return;
+  }
+  
+  document.getElementById('youTimeline').innerHTML = myStats.entries.slice(0, 10).map(e => {
+    const ratings = Object.values(e.ratings || {});
+    const avg = ratings.length ? (ratings.reduce((a,b) => a + b, 0) / ratings.length).toFixed(1) : null;
+    return `
+      <div class="tl-row">
+        <div class="tl-date">${fmtDate(e.createdAt)}</div>
+        <div class="tl-body">
+          <div class="tl-tag">${esc(e.tag || 'other')} · #${e.channel || 'general'}</div>
+          <div class="tl-content">${esc(e.content)}</div>
+          <div class="tl-rating">${avg ? 'Avg ' + avg + ' · ' + ratings.length + ' rating' + (ratings.length === 1 ? '' : 's') : 'Not rated yet'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================
+// CHAT
+// ============================================
+document.querySelectorAll('.channel-item').forEach(ch => {
+  ch.onclick = function(){
+    document.querySelectorAll('.channel-item').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    currentChannel = this.dataset.channel;
+    document.getElementById('currentChannel').textContent = currentChannel;
+    renderChat();
+  };
+});
+
+document.querySelectorAll('#tagPicker .tag-pill').forEach(p => {
+  p.onclick = function(){
+    document.querySelectorAll('#tagPicker .tag-pill').forEach(x => x.classList.remove('chosen'));
+    this.classList.add('chosen');
+    selectedTag = this.dataset.tag;
+  };
+});
+
+document.getElementById('postBtn').onclick = function(){
+  const text = document.getElementById('entryText').value.trim();
+  if(!text){
+    document.getElementById('postErr').textContent = 'Write something first.';
+    return;
+  }
+  
+  this.disabled = true;
+  document.getElementById('postErr').textContent = '';
+  
+  console.log('Posting:', { name: myName, content: text, tag: selectedTag, channel: currentChannel });
+  
+  apiPostEntry(myRoom, {
+    name: myName,
+    content: text,
+    tag: selectedTag,
+    channel: currentChannel
+  })
+    .then(res => res.json())
+    .then(entry => {
+      console.log('Posted successfully:', entry);
+      document.getElementById('entryText').value = '';
+      toast('Posted to #' + currentChannel, 'success');
+      return refreshAll();
+    })
+    .then(() => {
+      renderChat();
+      renderRightSidebar();
+    })
+    .catch(e => {
+      console.error('Post error:', e);
+      document.getElementById('postErr').textContent = 'Failed to post: ' + e.message;
+    })
+    .finally(() => {
+      this.disabled = false;
+    });
+};
+
+document.getElementById('entryText').onkeydown = function(e){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    document.getElementById('postBtn').click();
+  }
+};
+
+function renderChat(){
+  const channelEntries = allEntries.filter(e => (e.channel || 'general') === currentChannel);
+  console.log('Rendering chat for channel:', currentChannel, 'entries:', channelEntries.length);
+  
+  if(channelEntries.length === 0){
+    document.getElementById('chatMessages').innerHTML = `
+      <div class="empty" style="margin:auto;padding:40px;">
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px;">No messages in #${currentChannel}</div>
+        <div>Be the first to share something.</div>
+      </div>
+    `;
+    return;
+  }
+  
+  document.getElementById('chatMessages').innerHTML = channelEntries.map(e => {
+    const ratings = e.ratings || {};
+    const ratingValues = Object.values(ratings);
+    const avg = ratingValues.length ? (ratingValues.reduce((a,b) => a + b, 0) / ratingValues.length).toFixed(1) : null;
+    const myRating = ratings[myName];
+    const isMine = e.name === myName;
+    
+    let ratingHTML = '';
+    if(isMine){
+      ratingHTML = '<span class="rate-label">Your post</span>';
+    } else {
+      ratingHTML = '<span class="rate-label">Rate:</span>';
+      for(let i = 1; i <= 5; i++){
+        ratingHTML += `<button class="pt-btn ${myRating === i ? 'chosen' : ''}" data-rate="${e.id}" data-score="${i}">${i}</button>`;
+      }
+    }
+    
+    return `
+      <div class="chat-msg">
+        <div class="chat-msg-avatar" style="background:${col(e.name)}">${inits(e.name)}</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-head">
+            <span class="chat-msg-name">${esc(e.name)}</span>
+            <span class="chat-msg-time">${ago(e.createdAt)}</span>
+            <span class="chat-msg-tag">${esc(e.tag || 'other')}</span>
+          </div>
+          <div class="chat-msg-text">${esc(e.content)}</div>
+          <div class="chat-msg-rating">
+            ${ratingHTML}
+            <div class="avg-badge">${avg ? 'Avg ' + avg + ' · ' + ratingValues.length + ' rating' + (ratingValues.length === 1 ? '' : 's') : 'No ratings yet'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+}
+
+// Rating event delegation
+document.getElementById('chatMessages').addEventListener('click', function(e){
+  const btn = e.target.closest('[data-rate]');
+  if(!btn) return;
+  
+  const entryId = btn.dataset.rate;
+  const score = parseInt(btn.dataset.score);
+  btn.disabled = true;
+  
+  apiRate(myRoom, entryId, myName, score)
+    .then(() => refreshAll())
+    .then(() => {
+      renderChat();
+      renderRightSidebar();
+      toast('Rated ' + score + '/5', 'success');
+    })
+    .catch(() => toast('Could not submit rating', 'error'))
+    .finally(() => { btn.disabled = false; });
+});
+
+// ============================================
+// RIGHT SIDEBAR
+// ============================================
+function renderRightSidebar(){
+  if(!roomData) return;
+  
+  const members = roomData.members || [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayPosts = allEntries.filter(e => e.createdAt >= today.getTime()).length;
+  const totalRatings = allEntries.reduce((sum, e) => sum + Object.values(e.ratings || {}).length, 0);
+  
+  document.getElementById('memberList').innerHTML = members.map(name => {
+    const active = allEntries.some(e => e.name === name && e.createdAt >= today.getTime());
+    return `<div class="member-item"><span class="member-status ${active ? 'online' : ''}"></span><span>${esc(name)}</span></div>`;
+  }).join('');
+  
+  document.getElementById('statMembers').textContent = members.length;
+  document.getElementById('statPosts').textContent = todayPosts;
+  document.getElementById('statRatings').textContent = totalRatings;
+  
+  const champion = leaderboardData && leaderboardData.leaderboard ? leaderboardData.leaderboard[0] : null;
+  if(champion){
+    document.getElementById('championCard').innerHTML = `
+      <div class="champion-card">
+        <div class="champion-avatar" style="background:${col(champion.name)};color:white;">${inits(champion.name)}</div>
+        <div>
+          <h4>${esc(champion.name)}</h4>
+          <p>${champion.points} XP</p>
+        </div>
+      </div>
+    `;
+  } else {
+    document.getElementById('championCard').innerHTML = '<div class="empty" style="padding:16px;font-size:13px;">No ratings yet this week</div>';
+  }
+}
+
+// ============================================
+// LEADERBOARD
+// ============================================
+function renderBoard(){
+  if(!leaderboardData) return;
+  
+  document.getElementById('currentWeekRange').textContent = fmtRange(leaderboardData.weekStart, leaderboardData.weekEnd);
+  
+  const now = Date.now();
+  const remaining = leaderboardData.weekEnd - now;
+  if(remaining > 0){
+    const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    document.getElementById('countdown').textContent = days + 'd ' + hours + 'h left';
+  } else {
+    document.getElementById('countdown').textContent = 'Week ended!';
+  }
+  
+  const lb = leaderboardData.leaderboard || [];
+  
+  // Podium
+  if(lb.length >= 3){
+    document.getElementById('podium').innerHTML = `
+      <div class="podium-card second">
+        <div class="podium-rank">#2</div>
+        <div class="podium-name">${esc(lb[1].name)}</div>
+        <div class="podium-score">${lb[1].points} XP</div>
+      </div>
+      <div class="podium-card first">
+        <div class="podium-rank">#1</div>
+        <div class="podium-name">${esc(lb[0].name)}</div>
+        <div class="podium-score">${lb[0].points} XP</div>
+      </div>
+      <div class="podium-card third">
+        <div class="podium-rank">#3</div>
+        <div class="podium-name">${esc(lb[2].name)}</div>
+        <div class="podium-score">${lb[2].points} XP</div>
+      </div>
+    `;
+  } else if(lb.length > 0){
+    document.getElementById('podium').innerHTML = lb.slice(0, 3).map((x, i) => `
+      <div class="podium-card ${i === 0 ? 'first' : i === 1 ? 'second' : 'third'}">
+        <div class="podium-rank">#${i + 1}</div>
+        <div class="podium-name">${esc(x.name)}</div>
+        <div class="podium-score">${x.points} XP</div>
+      </div>
+    `).join('');
+  } else {
+    document.getElementById('podium').innerHTML = '<div class="empty" style="grid-column:span 3;">No ratings yet this week. Start posting and rating.</div>';
+  }
+  
+  // Rest of leaderboard
+  const rest = lb.slice(3);
+  document.getElementById('currentRankList').innerHTML = rest.length === 0 && lb.length <= 3 ? '' : rest.map((x, i) => `
+    <div class="rank-row">
+      <div class="rank-num">${i + 4}</div>
+      <div style="flex:1;">
+        <div class="rank-name">${esc(x.name)}</div>
+        <div class="rank-meta">${x.ratings} rating${x.ratings === 1 ? '' : 's'}${x.streak > 1 ? ' · ' + x.streak + ' day streak' : ''}</div>
+      </div>
+      <div class="rank-points">${x.points} XP</div>
+    </div>
+  `).join('');
+  
+  // History
+  const history = historyData && historyData.weeks ? historyData.weeks : [];
+  if(history.length === 0){
+    document.getElementById('historyList').innerHTML = '<div class="empty">No completed weeks yet. Check back next week.</div>';
+  } else {
+    document.getElementById('historyList').innerHTML = history.slice().reverse().map(x => `
+      <div class="history-row">
+        <div class="history-range">${fmtRange(x.weekStart, x.weekEnd)}</div>
+        <div class="history-winner">${esc(x.winner.name)}</div>
+        <div class="history-points">${x.winner.points} XP</div>
+      </div>
+    `).join('');
+  }
+}
+
+// ============================================
+// INVITE
+// ============================================
+document.getElementById('inviteBtn').onclick = function(){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText('Join my Varenyam room: ' + myRoom)
+      .then(() => toast('Invite copied'))
+      .catch(() => toast('Could not copy', 'error'));
+  } else {
+    toast('Copy this: ' + myRoom, 'info');
+  }
+};
+
+console.log('Varenyam loaded successfully');
+</script>
+</body>
+</html>
