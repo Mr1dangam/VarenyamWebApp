@@ -39,6 +39,55 @@ function fmtRange(s,e){ const a=new Date(s),b=new Date(e-1); return a.toLocaleDa
 function ago(ts){ const d=Date.now()-ts,m=Math.floor(d/60000); if(m<1)return'just now'; if(m<60)return m+'m ago'; const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago'; }
 
 // ============================================
+// SEED DATA — injected on first room creation
+// ============================================
+// Add this function right after the imports in app.js
+async function seedDemoPosts(roomCode) {
+  const entriesSnapshot = await getDocs(collection(db, 'rooms', roomCode, 'entries'));
+  if (entriesSnapshot.size > 0) return;
+  
+  const now = Date.now();
+  const yesterday = now - 24 * 60 * 60 * 1000;
+  
+  // Add vaibhav and neel as members
+  const roomRef = doc(db, 'rooms', roomCode);
+  const roomDoc = await getDoc(roomRef);
+  if (roomDoc.exists()) {
+    const data = roomDoc.data();
+    const members = data.members || [];
+    if (!members.includes('vaibhav')) members.push('vaibhav');
+    if (!members.includes('neel')) members.push('neel');
+    await updateDoc(roomRef, { members: members });
+  }
+  
+  // Create 2 demo entries
+  const demoEntries = [
+    {
+      id: 'seed-v-' + now,
+      name: 'vaibhav',
+      content: 'Crushed a leg day session — squats 4x12, leg press 3x15, finished with a 20min bike sprint. Legs are cooked but the pump is unreal.',
+      tag: 'fitness',
+      channel: 'general',
+      createdAt: yesterday + 2 * 60 * 60 * 1000,
+      ratings: { 'neel': 5 }
+    },
+    {
+      id: 'seed-n-' + now,
+      name: 'neel',
+      content: 'Badminton grind — 2 hours of drills and 5 matches. Won 4-1. Footwork feels sharper after last week\'s practice.',
+      tag: 'fitness',
+      channel: 'general',
+      createdAt: yesterday + 5 * 60 * 60 * 1000,
+      ratings: { 'vaibhav': 4 }
+    }
+  ];
+  
+  for (const entry of demoEntries) {
+    const entryRef = doc(db, 'rooms', roomCode, 'entries', entry.id);
+    await setDoc(entryRef, entry);
+  }
+}
+// ============================================
 // FIREBASE DATABASE FUNCTIONS
 // ============================================
 
@@ -67,6 +116,9 @@ async function getOrCreateRoom(roomCode, password, userName) {
       joinedAt: now
     });
     
+    // ⭐ Seed demo posts for new room
+    await seedDemoPosts(roomCode);
+    
     return { exists: false, data: (await getDoc(roomRef)).data() };
   } else {
     const data = roomDoc.data();
@@ -89,6 +141,9 @@ async function getOrCreateRoom(roomCode, password, userName) {
         await updateDoc(roomRef, { members: data.members });
       }
     }
+    
+    // ⭐ Seed demo posts if room is empty (existing room with no entries)
+    await seedDemoPosts(roomCode);
     
     return { exists: true, data: data };
   }
@@ -121,7 +176,7 @@ async function getLeaderboard(roomCode) {
   const now = Date.now();
   
   // Check if week has ended and calculate winner
-  if (now > roomData.weekEnd && roomData.entries && roomData.entries.length > 0) {
+  if (now > roomData.weekEnd) {
     const entriesSnapshot = await getDocs(collection(db, 'rooms', roomCode, 'entries'));
     const entries = entriesSnapshot.docs.map(d => d.data());
     
