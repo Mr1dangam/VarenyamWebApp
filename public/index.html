@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<base target="_blank">
 </head>
 <body>
 
@@ -468,6 +469,73 @@ const DB = {
 };
 
 // ============================================
+// SEED DEMO DATA
+// ============================================
+function seedDemoPosts(roomCode) {
+  const rooms = DB.getRooms();
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  // Only seed if room has no entries yet
+  if (room.entries && room.entries.length > 0) return;
+
+  const now = Date.now();
+  const yesterday = now - 24 * 60 * 60 * 1000;
+
+  // Add demo members if not present
+  ['vaibhav', 'neel'].forEach(function(name) {
+    if (!room.members.includes(name)) {
+      room.members.push(name);
+    }
+  });
+
+  // Seed entries
+  const seedPosts = [
+    {
+      id: 'seed-vaibhav-' + now,
+      name: 'vaibhav',
+      content: 'Hit legs today — squats 4x12, leg press 3x15, finished with a 20min bike sprint. Legs are absolutely cooked but the pump is unreal.',
+      tag: 'fitness',
+      channel: 'fitness',
+      createdAt: yesterday + 2 * 60 * 60 * 1000,
+      ratings: {}
+    },
+    {
+      id: 'seed-neel-' + now,
+      name: 'neel',
+      content: "Smash session at the badminton court — 2 hours of drills and 5 matches. Won 4-1. Footwork feels sharper after last week's grind.",
+      tag: 'fitness',
+      channel: 'fitness',
+      createdAt: yesterday + 5 * 60 * 60 * 1000,
+      ratings: {}
+    },
+    {
+      id: 'seed-vaibhav-study-' + now,
+      name: 'vaibhav',
+      content: 'Covered 3 chapters of Organic Chemistry today — reaction mechanisms, stereochemistry, and the dreaded named reactions. Making flashcards for revision.',
+      tag: 'study',
+      channel: 'study',
+      createdAt: now - 4 * 60 * 60 * 1000,
+      ratings: {}
+    },
+    {
+      id: 'seed-neel-study-' + now,
+      name: 'neel',
+      content: 'Deep focus session on DSA — solved 8 problems on graphs and trees. Finally cracked the Kruskal MST implementation without looking at notes.',
+      tag: 'study',
+      channel: 'study',
+      createdAt: now - 2 * 60 * 60 * 1000,
+      ratings: {}
+    }
+  ];
+
+  room.entries = seedPosts;
+  DB.saveRooms(rooms);
+}
+
+
+
+// ============================================
 // DIRECT API FUNCTIONS
 // ============================================
 function apiPostEntry(room, data){
@@ -540,6 +608,7 @@ document.getElementById('enterBtn').onclick = function() {
   }
   
   DB.addMember(room, name);
+  seedDemoPosts(room);
   myName = name;
   myRoom = room;
   Storage.set('v_name', myName);
@@ -552,6 +621,7 @@ document.getElementById('enterBtn').onclick = function() {
 if(myName && myRoom){
   const rooms = DB.getRooms();
   if(rooms[myRoom]){
+    seedDemoPosts(myRoom);
     enterApp();
   } else {
     Storage.remove('v_name');
